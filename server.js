@@ -1,42 +1,39 @@
-import { ApolloServer, gql } from 'apollo-server';
+require("dotenv").config();
+import { ApolloServer } from "apollo-server-express";
+import { typeDefs, resolvers } from "./schema";
+import { graphqlUploadExpress } from "graphql-upload";
+import { getUser, protectResolver } from "./users/users.utils";
+import express from "express";
 
-const typeDefs = gql`
-  type Movie {
-    title: String
-    year: Int
-  }
-  type Query {
-    movies: [Movie]
-    movie: Movie
-  }
-  type Mutation {
-    createMovie(title: String!): Boolean
-    deleteMovie(title: String!): Boolean
-  }
-`;
+const PORT = process.env.PORT;
 
-const resolvers = {
-  Query: {
-    movies: () => [],
-    movie: () => ({ title: 'Hello', year: 2021 }),
-  },
-  Mutation: {
-    createMovie: (_, { title }) => {
-      console.log(title);
-      return true;
+const startServer = async () => {
+  const server = new ApolloServer({
+    typeDefs,
+    resolvers,
+    context: async ({ req }) => {
+      return {
+        loggedInUser: await getUser(req.headers.token),
+      };
     },
-    deleteMovie: (_, { title }) => {
-      console.log(title);
-      return true;
-    },
-  },
+  });
+
+  await server.start();
+  const app = express();
+  app.use(graphqlUploadExpress());
+  server.applyMiddleware({ app });
+  await new Promise((func) => app.listen({ port: PORT }, func));
+  console.log(`🚀 Server: http://localhost:${PORT}${server.graphqlPath}`);
 };
+startServer();
 
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-});
+const x = (resolver) => (root, args, context, info) => {
+  if (!context.loggedInUser) {
+    return {
+      ok: false,
+      error: "LogIn pls",
+    };
+  }
 
-server
-  .listen()
-  .then(() => console.log('Server is Running on http://localhost:4000'));
+  return resolver(root, args, context, info);
+};
