@@ -6,10 +6,10 @@ Instaclone Backend.
 - [X] Create Account
 - [X] See Profile
 - [X] Login
-- [] Edit Profile
+- [X] Edit Profile
+- [X] Change Avator ( Image Upload )
 - [] Follow User
 - [] Unfollow User
-- [] Change Avator ( Image Upload )
 
 ## Photos
 

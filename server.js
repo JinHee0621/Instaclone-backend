@@ -4,6 +4,7 @@ import { typeDefs, resolvers } from "./schema";
 import { graphqlUploadExpress } from "graphql-upload";
 import { getUser, protectResolver } from "./users/users.utils";
 import express from "express";
+import logger from "morgan";
 
 const PORT = process.env.PORT;
 
@@ -21,7 +22,9 @@ const startServer = async () => {
   await server.start();
   const app = express();
   app.use(graphqlUploadExpress());
-  server.applyMiddleware({ app });
+  app.use(logger("tiny"));
+  app.use("/static", express.static("uploads"));
+  server.applyMiddleware({ app }); // applyMiddleware 는 logger 다음에 실행
   await new Promise((func) => app.listen({ port: PORT }, func));
   console.log(`🚀 Server: http://localhost:${PORT}${server.graphqlPath}`);
 };
